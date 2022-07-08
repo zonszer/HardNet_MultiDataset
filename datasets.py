@@ -207,7 +207,21 @@ class DS_AMOS(DS_parent):
     fliprot:bool = True
     masks_dir:str = None
     workers:int = 2
-    data_path:str = None
+    data_path:str = None # "Datasets/amos_10K.pt"
+
+@dataclass
+class DS_NIR_RGB(DS_parent):
+    dir:str
+    data_name:str
+    patch_sets:int
+    weight_function:object
+    transform:object
+    patch_gen:str
+    cams_in_batch:int
+    fliprot:bool = True
+    masks_dir:str = None
+    workers:int = 2
+    data_path:str = None # "Datasets/amos_10K.pt"
 
 @dataclass
 class DS_wrapper:
@@ -248,7 +262,7 @@ class DS_wrapper:
                             args=self.args,
                         )
                     ]
-                elif isinstance(d, DS_AMOS):
+                elif isinstance(d, DS_AMOS) or isinstance(d, DS_NIR_RGB):
                     # new_split_name = d.split_name+ '_masks:' + ('None' if d.masks_dir is None else os.path.basename(d.masks_dir))
                     self.loaders += [
                         AMOS_dataset(
@@ -316,7 +330,7 @@ class DS_wrapper:
 
         self.iters = []
         for i,l in enumerate(self.loaders):
-            l.generate_tuples(bs_seq=[l.bs for c in self.ds_idx_seq if c == i])
+            l.generate_tuples(i, bs_seq=[l.bs for c in self.ds_idx_seq if c == i])
             self.iters += \
                 [iter(torch.utils.data.DataLoader(l, batch_size=l.bs, shuffle=False, num_workers=self.loaders[i].ds_info['workers'],
                                                   pin_memory=True, collate_fn=my_collate_fn))]
@@ -337,7 +351,7 @@ class DS_wrapper:
             with open(pjoin(model_dir, save_name, 'setup.txt'), 'w') as f:
                 print('args:\n{}\n'.format(str(args)), file=f)
                 for l,d in zip(self.loaders, self.datasets):
-                    if isinstance(d, DS_AMOS):
+                    if isinstance(d, DS_AMOS) or isinstance(d, DS_NIR_RGB):
                         d.data_path = l.data_path
                     # print(sorted(d.__dict__.items()), file=f)
                     print(str(type(d))+ ':\n' + '\n'.join([str(x) for x in sorted(d.__dict__.items())]) + '\n', file=f)
@@ -387,16 +401,16 @@ class DS_wrapper:
         loader = self.loaders[ds_idx]
         sample = next(self.iters[ds_idx])
         info['loader'] = 'other'
-        if isinstance(self.loaders[ds_idx].ds_info['dataset'], DS_AMOS): # only AMOS provides info
+        if isinstance(self.loaders[ds_idx].ds_info['dataset'], DS_AMOS) or isinstance(self.loaders[ds_idx].ds_info['dataset'], DS_NIR_RGB): # only AMOS provides info
             if hasattr(loader, 'block_sizes'):
                 info['block_sizes'] = loader.block_sizes[0]
                 loader.block_sizes = loader.block_sizes[1:]
             info['PS_idxs'] = sample['PS_idxs']
-            info['set_idxs'] = sample['set_idxs']
+            info['set_idxs'] = sample['set_idxs']       #len(info['set_idxs']) == 3072 ==len(info['PS_idxs'])
             info['loader'] = 'AMOS'
             info['sigmas'] = self.sigmas[ds_idx][info['PS_idxs']]
 
-        info['labels'] = sample['labels']
+        info['labels'] = sample['labels']       #info['labels'].shape == 6144
         info['ds_idx'] = ds_idx
         data = sample['data'].float().cuda()
 
@@ -474,6 +488,10 @@ def get_train_dataset(args, data_name): # returns dataset wrapper
             DS_Brown('Datasets/6Brown/liberty.pt', trans_resize32),
             DS_Brown('Datasets/Phototourism/hagia_sophia_interior_middleedges.pt', trans_resize32, workers=3),
         ]
+    elif args.ds in ['lib']:
+        DSs = [
+            DS_Brown('Datasets/6Brown/liberty.pt', trans_resize32),
+        ]
     elif args.ds in ['lib+sofia+AMOS']:
         DSs = [
             DS_Brown('Datasets/6Brown/liberty.pt', trans_resize32),
@@ -488,6 +506,12 @@ def get_train_dataset(args, data_name): # returns dataset wrapper
     elif args.ds in ['v4+lib']:
         DSs = [
             DS_AMOS('Datasets/AMOS-views/AMOS-views-v4', data_name, args.patch_sets, args.weight_function, trans_AMOS, args.patch_gen, args.cams_in_batch, workers=10),
+            DS_Brown('Datasets/6Brown/liberty.pt', trans_resize32),
+        ]
+    elif args.ds in ['NIR_RGB']:
+        DSs = [
+            DS_NIR_RGB('Datasets/NIR_RGB_DS', data_name, args.patch_sets, args.weight_function, trans_AMOS,
+                    args.patch_gen, args.cams_in_batch, workers=20),
             DS_Brown('Datasets/6Brown/liberty.pt', trans_resize32),
         ]
     elif args.ds in ['lib+v4']:

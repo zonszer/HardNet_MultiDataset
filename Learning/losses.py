@@ -127,7 +127,7 @@ def tripletMargin_generalized(embeddings, labels,  # this is general implementat
     # embeddings = torch.rand(N, 3)
 
     with torch.no_grad():
-        dm = torch.cdist(embeddings, embeddings)
+        dm = torch.cdist(embeddings, embeddings)    #compute the L2 dist and return matrix
 
         is_pos = labels.expand(N, N).eq(labels.expand(N, N).t()).float()
         # is_neg = labels.expand(N, N).ne(labels.expand(N, N).t())
@@ -136,25 +136,25 @@ def tripletMargin_generalized(embeddings, labels,  # this is general implementat
         pos_dist_max, pos_distmax_idx = (is_pos * dm).max(dim=1)
         too_close = dm.le(0.008).float()
         # neg_dist_min, neg_distmin_idx = (HUGE_CONST * is_pos.float() + dm).min(dim=1)
-        neg_dist_min, neg_distmin_idx = (is_pos*HUGE_CONST + too_close*HUGE_CONST + dm).min(dim=1)
-
+        neg_dist_min, neg_distmin_idx = (is_pos*HUGE_CONST + too_close*HUGE_CONST + dm).min(dim=1)  #horizontial min value, neg_idx is col idx
+        #上面求neg_dist——idx的方法是去掉pos——idx和too_close后取行最小值（为啥要去too_close：可能是认为它们实际内容很类似的那种情况）
         labels_unique = torch.unique(labels)
-        NL = len(labels_unique)
-        label_class_matrix = labels.unsqueeze(0).expand(NL, N).eq(labels_unique.unsqueeze(0).expand(N, NL).t())
-
+        NL = len(labels_unique)     #why use unique labels: ???
+        label_class_matrix = labels.unsqueeze(0).expand(NL, N).eq( labels_unique.unsqueeze(0).expand(N, NL).t() ) #t()表 transposed
+        #label_class_matrix的function is: 根据label_class_matrix过滤掉非unique的patch。 label_class_matrix.shape ==torch.Size([3072, 6144])
         pos_dist_max_class = (pos_dist_max.unsqueeze(0).expand(NL, N) * label_class_matrix.float()).max(dim=1)
         neg_dist_min_class = (neg_dist_min.unsqueeze(0).expand(NL, N) + HUGE_CONST * (~label_class_matrix).float()).min(dim=1)
 
     # a = pos_dist_max[pos_dist_max_class[1]]
     # b = neg_dist_min[neg_dist_min_class[1]]
 
-    a = torch.norm(embeddings[pos_dist_max_class[1]] - embeddings[pos_distmax_idx[pos_dist_max_class[1]]], dim=1)
+    a = torch.norm(embeddings[pos_dist_max_class[1]] - embeddings[pos_distmax_idx[pos_dist_max_class[1]]], dim=1)   #in dim1(每行中） compute L2 norm value
     b = torch.norm(embeddings[neg_dist_min_class[1]] - embeddings[neg_distmin_idx[neg_dist_min_class[1]]], dim=1)
 
     # edge = pos_dist_max_class[0] - neg_dist_min_class[0]
-    edge = a - b
-    loss = torch.clamp(margin_pos + edge, min=0.0)
-    return loss, edge
+    edge = a - b    #a.shape == torch.Size([3072])
+    loss = torch.clamp(margin_pos + edge, min=0.0)      #edge是3072个数字但是embedding是6千多行，也就是说不是都用于训练
+    return loss, edge           #用clump防止loss的最小值可能为复数的情况
 
 # def our_tripletMargin_(embeddings, labels, # I think this was my first try to write general embeds+labels loss function, but it was slow
 #                        indices_tuple,

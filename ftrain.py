@@ -65,8 +65,8 @@ def our_loss(name:str, embeddings, info):
 
 def our_loss_generalized(name:str, embeddings, info):
     labels = info['labels'].long().cuda()
-    loss, edge = tripletMargin_generalized(embeddings=embeddings, labels=labels, margin_pos=args.marginpos)
-    return loss.mean(), edge
+    loss, edge = tripletMargin_generalized(embeddings=embeddings, labels=labels, margin_pos=args.marginpos) #loss.shape==torch.Size([3072])
+    return loss.mean(), edge    #edge = pos_max - min_min
 
 def softMarginLoss(loss_fc, embeddings, info):
     loss = loss_fc(embeddings)

@@ -481,7 +481,7 @@ def one_per_window(ss, wsize, sigmas):
                     z[1] += [(x,y)]
     return np.array(z[0]), np.array(z[1])
 
-def draw_positions(res, name, suffix=''):
+def draw_positions(res, name, suffix=''):       #the last arg suffix's use is st for file name
     img = Image.open(name)
     draw = ImageDraw.Draw(img)
     for s, (x,y) in zip(res[0], res[1]):
@@ -556,13 +556,18 @@ class HessDetector:
         if ret_mask:
             return ss > 0
         # print('counts', [np.sum(c>0) for c in ss])
-        res = np.array(np.nonzero(ss))
+        res = np.array(np.nonzero(ss))  #res is 3-D index of the num in ss which is not 0
         res = [np.array([get_scale(self.sigmas[c], self.base_size) for c in res[0, :]]), np.swapaxes(res[[2, 1], :], 0, 1)]
         return res
 
 if __name__ == "__main__":
     # draw_positions(detect_positions(example('sunflowers.png')), 'sunflowers.png')
     # draw_positions(HessDetector(sigmas=[1.8**i for i in range(0, 6)], base_size=24, fixed_MP=True).detect_positions(example('20130930_103006.png'), mask=np.array(Image.open('00000367.png'))), '20130930_103006.png')
-    draw_positions(HessDetector(sigmas=[1.8**i for i in range(5, 6)], base_size=6, fixed_MP=True).detect_positions(example('sunflowers.png')), 'sunflowers.png', '_6')
-    draw_positions(HessDetector(sigmas=[1.8**i for i in range(0, 1)], base_size=24, fixed_MP=True).detect_positions(example('sunflowers.png')), 'sunflowers.png', '_24')
+    draw_positions(HessDetector(sigmas=[1.8**i for i in range(5, 6)], base_size=6, fixed_MP=True).detect_positions(example('00000118_0.png')), '00000118_0.png', '_6')
+    draw_positions(HessDetector(sigmas=[1.8**i for i in range(0, 1)], base_size=24, fixed_MP=True).detect_positions(example('00000118_0.png')), '00000118_0.png', '_24')
     # draw_positions(detect_positions(example('20130805_125425.png'), mask=np.array(Image.open('00007195.png'))), '20130805_125425.png')
+
+    # [1] own settings
+    # mask = HessDetector(sigmas=[1.8**i for i in range(0, 1)], base_size=24, fixed_MP=True).detect_positions()
+    # draw_positions(HessDetector(sigmas=[1.8**i for i in range(5, 6)], base_size=30, fixed_MP=True).detect_positions(example('00000118_0.png'), ret_mask=True), '00000118_0.png', '_6')
+    # draw_positions(HessDetector(sigmas=[1.8**i for i in range(0, 1)], base_size=30, fixed_MP=True).detect_positions(example('00000118_0.png'), ret_mask=True), '00000118_0.png', '_24')

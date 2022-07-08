@@ -21,15 +21,15 @@ fastscript==0.1.4
 fire==0.2.1
 future==0.18.2
 gast==0.3.3
-google-auth==1.15.0
-google-auth-oauthlib==0.4.1
-google-pasta==0.2.0
+# google-auth==1.15.0
+# google-auth-oauthlib==0.4.1
+# google-pasta==0.2.0
 grpcio==1.29.0
 h5py==2.10.0
 idna==2.9
 imageio==2.8.0
-ipykernel==5.1.4
-ipython==7.13.0
+# ipykernel==5.1.4
+# ipython==7.13.0
 ipython-genutils==0.2.0
 ipywidgets==7.5.1
 jedi==0.16.0
@@ -42,13 +42,13 @@ jupyter-console==6.1.0
 jupyter-core==4.6.3
 Keras-Preprocessing==1.1.2
 kiwisolver==1.1.0
-kornia==0.3.0+3b32d27
+#kornia==0.3.0+3b32d27
 Markdown==3.2.2
 MarkupSafe==1.1.1
 matplotlib==3.2.1
 mistune==0.8.4
-mkl-fft==1.0.15
-mkl-random==1.1.0
+#mkl-fft==1.0.15
+#mkl-random==1.1.0
 mkl-service==2.3.0
 multiprocess==0.70.9
 murmurhash==1.0.2
@@ -108,8 +108,8 @@ srsly==1.0.2
 tabulate==0.8.6
 tensorboard==2.2.2
 tensorboard-plugin-wit==1.6.0.post3
-tensorflow==2.2.0
-tensorflow-estimator==2.2.0
+# tensorflow==2.2.0
+# tensorflow-estimator==2.2.0
 termcolor==1.1.0
 terminado==0.8.3
 testpath==0.4.4

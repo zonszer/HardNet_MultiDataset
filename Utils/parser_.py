@@ -9,7 +9,7 @@ parser.add_argument('--id', default='0', help='experiment id - you do not want t
 parser.add_argument('--resume', default='', metavar='PATH', help='path to latest checkpoint (default: none)')
 parser.add_argument('--optimizer', default='sgd', help='The optimizer to use (default: SGD)')
 parser.add_argument('--depths', default='', help='path')
-parser.add_argument('--ds', default='v4', help='choose prepared mix of datasets: v3, v4, v5, ...')
+parser.add_argument('--ds', default='NIR_RGB', help='choose prepared mix of datasets: v3, v4, v5, ...')  #'v4+lib'
 parser.add_argument('--init_good', default='', help='')
 parser.add_argument('--model_arch', '--arch', default='h8', help='')
 # parser.add_argument('--patch_gen', '--pgen', default='meanImg', help='options: oneRes, oneImg, sumImg, meanImg, medianImg, new')
@@ -17,10 +17,10 @@ parser.add_argument('--patch_gen', '--pgen', default='new', help='options: oneRe
 # parser.add_argument('--sigmas_v', type=str, default='v1', help='sigmas version in new detection')
 parser.add_argument('--sigmas_v', default='e011', help='sigmas version in new detection')
 # parser.add_argument('--loss', default='tripletMargin', help='Other options: softmax, contrastive, tripletMarginHuberInternal, face')
-parser.add_argument('--loss', default='tripletMargin', help='Other options: tripletMargin++')
+parser.add_argument('--loss', default='tripletMargin', help='Other options: tripletMargin')       #下午可以改为非++的情况看看loss的计算过程
 parser.add_argument('--miner', default='BatchHardMiner', help='')
 parser.add_argument('--batch_reduce', default='min', help='Other options: average, random, random_global, L2Net')
-parser.add_argument('--masks_dir', '--masks', default='Datasets/AMOS-views/AMOS-masks', help='')
+parser.add_argument('--masks_dir', '--masks', default=None , help='')       #'Datasets/AMOS-views/AMOS-masks'
 parser.add_argument('--weight_function', '--wf', default='Hessian',
                     help='Keypoints are generated with probability ~ weight function. Variants: uniform, Hessian, HessianSqrt, HessianSqrt4')
 parser.add_argument('--combine', default='', help='inbatch, epoch')
@@ -50,7 +50,8 @@ parser.add_argument('--no_fliprot', default=False, action='store_true', help='tu
 parser.add_argument('--addAP', default=False, action='store_true', help='add AP lsos to standard loss')
 parser.add_argument('--AP_loss', default=False, action='store_true')
 parser.add_argument('--sigmas', default=False, action='store_true', help='enable sigmas')
-# parser.add_argument('--no_masks', type=bool, default=False, action='store_true', help='')
+# parser.add_argument('--no_masks', type=bool, default=True, action='store_true', help='')
+
 parser.add_argument('--no_detach', default=False, action='store_true', help='detach negative desctiptors from loss grad')
 parser.add_argument('--separ_batches', default=False, action='store_true', help='separates good and bad patches; sets cams_in_batch to 0')
 parser.add_argument('--pairs_imgs', default=False, action='store_true', help='take positives from pairs of imgs only')
@@ -59,6 +60,7 @@ parser.add_argument('--all_info', default=False, action='store_true', help='')
 # parser.add_argument('--new_batches', '--NB', default=False, action='store_true', help='')
 parser.add_argument('--old_batches', '--NB', default=False, action='store_true', help='')
 parser.add_argument('--use_patchmask', '--patchmask', default=False, action='store_true', help='do not use patch_mask')
+
 parser.add_argument('--use_collisions', '--collisions', '--colls', default=False, action='store_true', help='do not use patch_mask')
 parser.add_argument('--nonmax', default=False, action='store_true', help='')
 parser.add_argument('--scaleit', default=False, action='store_true', help='')

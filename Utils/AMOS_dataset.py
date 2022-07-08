@@ -15,7 +15,7 @@ from dataclasses import dataclass
 @dataclass
 class AMOS_dataset(data.Dataset):
     root_dir:str = None  # root (string): Root directory where directories with image sets are.
-    data_name:str = 'full'  # split_name (string): Name of the train-test split to load.
+    data_name:str = "train-test"    #'full'  # split_name (string): Name of the train-test split to load.
     transform:object = None  # transform (callable, optional): A function/transform that  takes in an PIL image and returns a transformed version.
     Npatch_sets:int = 30000  # n_patch_sets(int): Number of correspondences to generate
     Npositives:int = 2  # n_positives(int, default: 2): Number of positive examples to generate, if more than 2 images exist
@@ -34,7 +34,7 @@ class AMOS_dataset(data.Dataset):
     spy:int = 0
     label_offset:int = 0
     separ_batches:bool = False
-    data_path:str = None
+    data_path:str = None #'Datasets/amos_10K.pt'
     good_pr:float = 0.1
     pairs_imgs:bool = False
     min_sets_per_img:int = -1
@@ -104,7 +104,7 @@ class AMOS_dataset(data.Dataset):
     def get_labels(self):
         return np.arange(self.patch_sets.shape[0])+self.label_offset
 
-    def generate_tuples(self, bs_seq):
+    def generate_tuples(self, num_ofruns, bs_seq):
         tuples = []
         all_cams = np.unique(self.cam_idxs.numpy().astype(np.int)).tolist()
         cam_idxs = [np.array([i for i, x in enumerate(self.cam_idxs) if x == c]) for c in all_cams]
@@ -147,7 +147,9 @@ class AMOS_dataset(data.Dataset):
                     return tuples_cur
                 return fce
             p = pp.ProcessPool(multiprocessing.cpu_count())
-            p.restart() # in pathos new instances of pool are somehow tied to one global instance, so restart and close each time
+            # p.restart() # in pathos new instances of pool are somehow tied to one global instance, so restart and close each time
+            if num_ofruns != 0:
+                p.restart()
             tuples = p.map(wrap_fce(all_cams.copy(), self.patches_mask, self.patch_sets.shape[1], cam_idxs, self.collisions, self.Npositives), bs_seq)
             p.close() # otherwise script does not exit with threads still running
             tuples = list(itertools.chain.from_iterable(tuples))
@@ -471,7 +473,7 @@ class AMOS_dataset(data.Dataset):
         angles = None
         return LAFs, angles
 
-    def generate_LAFs_and_patches_from_dir(self, dir_name, nLAFs):
+    def generate_LAFs_and_patches_from_dir(self, num_ofruns, dir_name, nLAFs):
         imgs = get_imgs(pjoin(self.root, dir_name), grayscale=True, depth_path='') # just get the centers
         mask = np.ones((imgs[0].height, imgs[0].width))
         if self.masks_dir is not None:
@@ -521,7 +523,8 @@ class AMOS_dataset(data.Dataset):
         if angles is None:
             angles = np.degrees(np.random.uniform(-np.pi, np.pi, len(LAFs)))
         p = pp.ProcessPool(multiprocessing.cpu_count())
-        p.restart()
+        if  num_ofruns != 0:
+            p.restart()           #when p._pool._state==RUN can not use .restart
         for img in imgs:
             new_patches = p.map(crop_patch(img, self.patch_size), As, angles)
             patches += [torch.cat([(255 * tforms.ToTensor()(x).unsqueeze(0)).byte() for x in new_patches])]
@@ -641,7 +644,7 @@ class AMOS_dataset(data.Dataset):
             Nnew_tracks = max(Nnew_tracks, self.min_sets_per_img)
             print('img size equivalent to', Nnew_tracks, 'points')
             # new_tracks, new_lafs, new_patches_mask, new_scales = self.generate_LAFs_and_patches_from_dir(img_dir, Nnew_tracks)
-            new_tracks, new_lafs, new_patches_mask = self.generate_LAFs_and_patches_from_dir(img_dir, Nnew_tracks)
+            new_tracks, new_lafs, new_patches_mask = self.generate_LAFs_and_patches_from_dir(i, img_dir, Nnew_tracks)
             tracks      += [new_tracks]
             lafs        += [new_lafs]
             patches_mask+= [new_patches_mask]
